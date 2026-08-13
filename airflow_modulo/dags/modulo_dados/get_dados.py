@@ -1,5 +1,5 @@
 #%%
-from praticando.airflow_modulo.dags.modulo_dados.connection import postgre_connection
+from connection import postgre_connection
 
 #%%
 def extrai_dados():
