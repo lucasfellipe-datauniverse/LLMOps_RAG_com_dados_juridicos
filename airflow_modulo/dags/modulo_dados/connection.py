@@ -14,3 +14,4 @@ def postgre_connection():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     return conn, cur
+ 

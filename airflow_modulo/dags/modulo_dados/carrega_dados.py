@@ -35,7 +35,7 @@ def cria_tabela():
 
         cur.execute(criacao)
         conn.commit()
-
+ 
     except Exception as e:
         print(e)
 

@@ -17,4 +17,4 @@ def extrai_dados():
     cur.close()
     conn.close()
 
-    return alldata        
+    return alldata         

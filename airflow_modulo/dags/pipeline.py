@@ -44,6 +44,6 @@ task_indexa_dados = PythonOperator(
     task_id='indexa_dados',
     python_callable=cria_indece,
     dag=dag
-)
+) 
 
 task_cria_tabela >> task_insere_dados_json >> task_insere_dados_csv >> task_indexa_dados
