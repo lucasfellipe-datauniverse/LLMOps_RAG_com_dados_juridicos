@@ -1,3 +1,5 @@
+from pathlib import Path
+
 #%%
 import pandas as pd
 
@@ -25,13 +27,14 @@ def mrr(relevance_total):
 
 def evaluate(research_funtion):
     # verifica se o rag buscou informacao correta ou incorreta para a requisicao
-    ground_truth = pd.read_csv('streamlit/app/dadosHistoricos/dataset.csv') 
-    ground_truth.to_dict(orient='records')    
+                                
+    dataset_path = Path(__file__).parent / 'dados_historicos' / 'dataset.csv'
+    ground_truth = pd.read_csv(dataset_path).to_dict(orient='records')
 
     relevance_total = []
 
     for line in ground_truth:
-        doc_id = line['documnet']
+        doc_id = line['document']
 
         results = research_funtion(line) # research_fuc fara..
 
@@ -43,3 +46,4 @@ def evaluate(research_funtion):
         'hit_rate': hit_rate(relevance_total),
         'mrr': mrr(relevance_total)
     }    
+ 

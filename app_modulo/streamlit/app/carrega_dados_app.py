@@ -1,3 +1,4 @@
+#%%
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import hashlib
@@ -8,7 +9,7 @@ def postgre_connection():
     conn = psycopg2.connect(dbname='airflow',
                             user='airflow',
                             password='airflow',
-                            host='postgre',
+                            host='postgres',
                             port=5432)
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -17,9 +18,9 @@ def postgre_connection():
 
 def gera_id(doc):
     # gera id atraves de conteudo do conteudo
-    combined = f'{doc['text'][:10]}-{doc['question']}'
+    combined = f"{doc['text'][:10]}-{doc['question']}"
 
-    hash_object = hashlib.md5(combined.encode)
+    hash_object = hashlib.md5(combined.encode())
 
     hash_hex = hash_object.hexdigest()
 
@@ -33,27 +34,27 @@ def captura_user_e_avaliacao(doc_id, user_input, result, llm_score, response_tim
 
     try:
         create = """
-            CREATE TABLE user_avaliacao (
+            CREATE TABLE IF NOT EXISTS user_avaliacao (
             id SERIAL NOT NULL PRIMARY KEY,
             doc_id VARCHAR(10) NOT NULL,
             user_input TEXT NOT NULL,
             result TEXT NOT NULL,
             llm_score DOUBLE PRECISION NOT NULL,
             response_time DOUBLE PRECISION NOT NULL,
-            hit_rate DOUBLE PRECISION NOT ULL
+            hit_rate DOUBLE PRECISION NOT NULL,
             mrr DOUBLE PRECISION NOT NULL,
-            created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP        
+            created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """
         cur.execute(create)
         conn.commit()
-        'tabela user_avaliacao criada com sucesso'
+        print('tabela user_avaliacao criada com sucesso')
 
-    except Exception as e:        
+    except Exception as e:
         print(f'erro ao criar tabela user_avaliacao:{e}')
         conn.rollback()
 
-    try:
+    try: 
         insert = f"""
         INSERT INTO user_avaliacao (
         doc_id, user_input, result, llm_score, response_time, hit_rate, mrr
@@ -64,14 +65,13 @@ def captura_user_e_avaliacao(doc_id, user_input, result, llm_score, response_tim
         """
         cur.execute(insert)
         conn.commit()
-        print('dados inseridos com sucesso na tabela user_avaliacao')        
+        print('dados inseridos com sucesso na tabela user_avaliacao')
     except Exception as e:
-        print(f'erro ao inserir dados na tabela user_avaliacao:{e}')  
-        conn.rollback()      
-
+        print(f'erro ao inserir dados na tabela user_avaliacao:{e}')
+        conn.rollback()
     finally:
         cur.close()
-        conn.close()            
+        conn.close()
 
 def captura_user_feedback(doc_id, user_input, result, response_time, issatisfield):
     # cria tabela e insere dados de feedback do usuario em relacao ao input
@@ -79,21 +79,21 @@ def captura_user_feedback(doc_id, user_input, result, response_time, issatisfiel
 
     try:
         create = """
-            CREATE TABLE user_feedback (
+            CREATE TABLE IF NOT EXISTS user_feedback (
             id SERIAL PRIMARY KEY NOT NULL,
             doc_id VARCHAR(10) NOT NULL,
             user_input TEXT NOT NULL,
             result TEXT NOT NULL,
-            response_time DOUBLE PRECISION NOT NULL, 
+            response_time DOUBLE PRECISION NOT NULL,
             issatisfield BOOLEAN NOT NULL,
-            created_date TIMESTAMP DEFAULT CUCRENT_TIMESTAMP 
+            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """
         cur.execute(create)
         conn.commit()
 
     except Exception as e:
-        print(f'erro ao criar tabela user_feedback')
+        print(f'erro ao criar tabela user_feedback:{e}')
         conn.rollback()
 
     try:
@@ -110,9 +110,9 @@ def captura_user_feedback(doc_id, user_input, result, response_time, issatisfiel
         print('dados inseridos na tabela user_feedback com sucesso')
 
     except Exception as e:
-        print(f'erro ao inserir dados na tabela user_feedback')
+        print(f'erro ao inserir dados na tabela user_feedback:{e}')
         conn.rollback()
 
     finally:
         cur.close()
-        conn.close()                        
+        conn.close()

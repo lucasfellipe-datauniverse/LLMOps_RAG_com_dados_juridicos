@@ -1,19 +1,18 @@
 #%%
 import os
-import datetime
+import time
 import requests
 #%%
 def llm_query(payload):
     # faz consulta no llm usando a pergunda e o contexto(obtido dos dados do elastichsearch)
-    API_URI = 'https://api-inference.huggingface.co/models/google-bert/bert-large-uncased-whole-word-masking-finetuned-squad'
+    API_URI = 'https://router.huggingface.co/hf-inference/models/google-bert/bert-large-uncased-whole-word-masking-finetuned-squad'
 
-    # HAGGINGFACE_KEY variavel do compose que armazena a key do modelo
-    headers = {'Authorization': f'Bearer {os.getenv('HAGGINGFACE_KEY')}'}
+    headers = {'Authorization': f"Bearer {os.getenv('HUGGINGFACE_KEY')}"}
 
-    starttime = datetime.time()
-    response = requests.post(API_URI, headers=headers, json=payload)
-    endtime = datetime.time()
-
+    starttime = time.time()
+    response = requests.post(API_URI, headers=headers, json=payload, timeout=60)
+    endtime = time.time()
+ 
     response_time = round(endtime - starttime, 2)
-
-    return response.json, response_time 
+    
+    return response.json(), response_time  
