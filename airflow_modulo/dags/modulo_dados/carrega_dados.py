@@ -5,16 +5,16 @@ import hashlib
 import pandas as pd
 # from shutil import ExecError
 from elasticsearch import Elasticsearch
-from praticando.airflow_modulo.dags.modulo_dados.connection import postgre_connection
-from get_dados import extrai_dados
+from modulo_dados.connection import postgre_connection
+from modulo_dados.get_dados import extrai_dados
 
 #%% 
 
 def gera_id(doc):
     # gera id atraves de conteudo do conteudo
-    combined = f'{doc['text'][:10]}-{doc['question']}'
+    combined = f"{doc['text'][:10]}-{doc['question']}"
 
-    hash_object = hashlib.md5(combined.encode)
+    hash_object = hashlib.md5(combined.encode())
 
     hash_hex = hash_object.hexdigest()
 
@@ -69,19 +69,21 @@ def insere_dados_json():
         alldata.append((str(docid), str(data['question']), data['text']))
 
     try:
-        args = (','.join(cur.mogrify('(%s,%s,%s)', i)).decode('utf-8') 
-                for i in alldata) 
+        args = ','.join(
+                        cur.mogrify('(%s, %s, %s)', item).decode('utf-8')
+                        for item in alldata)
 
-        inserir = 'INSERT INTO dados_juridicos (docid, question, answer) VALUES' + (args)
+        inserir = 'INSERT INTO dados_juridicos (doc_id, question, answer) VALUES' + (args)
 
         cur.execute(inserir)
         conn.commit()
 
         print('dados inseridos na tabela dados_juridicos')
 
-    except Exception as e:    
+    except Exception as e:
         print(f'erro ao inserir dados:{e}')
         conn.rollback()
+        raise
 
     finally:
         cur.close()
@@ -91,24 +93,29 @@ def insere_dados_csv():
     # insere dados csv na tabela dados_juridicos do banco do airflow    
     alldata = []
 
-    dados_csv = pd.read_csv(f'{os.getcwd()}/dags/dados/dataset2.csv')
+    dados_csv = (
+        pd.read_csv(f'{os.getcwd()}/dags/dados/dataset2.csv')
+        .dropna(subset=['case_title', 'case_text'])
+        .head(25)
+    )
 
     conn, cur = postgre_connection()
 
     for _, data in dados_csv.head(25).iterrows():
 
-        data = {'question': data['question'],
-                'text': data['answer']}
+        data = {'question': str(data['case_title']),
+                'text': str(data['case_text'])}
 
         docid = gera_id(data)
 
         alldata.append((str(docid), str(data['question']), str(data['text'])))
 
     try:
-        args = (','.join(cur.mogrify('(%s, %s, %s)', i)).decode('utf-8')
-                for i in alldata)    
-
-        inserir = 'INSERT INTO dados_juridicos (docid, question, answer) VALUES' + (args)
+        args = ','.join(
+                        cur.mogrify('(%s, %s, %s)', item).decode('utf-8')
+                        for item in alldata)
+        
+        inserir = 'INSERT INTO dados_juridicos (doc_id, question, answer) VALUES' + (args)
 
         cur.execute(inserir)
         conn.commit()
@@ -117,15 +124,16 @@ def insere_dados_csv():
     except Exception as e:
         print(f'erro ao inserir dados: {e}')
         conn.rollback()
+        raise
 
     finally:
         cur.close()
         conn.close()                
 
 
-def cria_indece_():
+def cria_indece():
     # cria index e indexa dados no elastic search
-    esCliente = Elasticsearch('http://<containerid>:9200')
+    esCliente = Elasticsearch('http://elasticsearch:9200')
 
     indexName = 'projetorag'
 
@@ -142,18 +150,19 @@ def cria_indece_():
             }
     }
 
-    if esCliente.indeces.exists(index=indexName):
-        esCliente.indeces.delete(index=indexName)
+    if esCliente.indices.exists(index=indexName):
+        esCliente.indices.delete(index=indexName)
 
-    esCliente.indeces.create(index=indexName, body=indexSettings)
+    esCliente.indices.create(index=indexName, body=indexSettings)
 
     data = extrai_dados()
     
     for doc in data:
-        doc = {'question': doc[0],
-                    'text': doc[1]}
+        doc = {'doc_id': doc['doc_id'],
+                'question': doc['question'],
+                'text': doc['answer']}
         try:
-            esCliente.index(index=indexName, data=doc)            
+            esCliente.index(index=indexName, document=doc)            
         except Exception as e:
             print(f'erro ao indexar dados:{e}')
     print('dados indexados com sucesso')

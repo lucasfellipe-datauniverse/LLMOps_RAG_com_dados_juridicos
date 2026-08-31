@@ -1,9 +1,9 @@
 #%%
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from airflow.operators.python import PythonOperators
+from airflow.operators.python import PythonOperator
 from datetime import timedelta
-from modulo_dados.carrega_dados import postgre_connection, cria_tabela, insere_dados_json, insere_dados_csv, extrai_dados, cria_indece
+from modulo_dados.carrega_dados import cria_tabela, insere_dados_json, insere_dados_csv, cria_indece
 
 #%%
 # puipeline de engenharia de dados para carga extracao e indexacao de dados para RAG
@@ -16,7 +16,7 @@ default_args = {
 }
 
 dag = DAG(
-    'engenharia de dados para RAG',
+    'engenharia_de_dados_para_RAG',
     default_args=default_args,
     schedule='0 0 * * *',
     description='Pipeline de carga, extracao e indexacao de dados para rag'
@@ -35,7 +35,7 @@ task_insere_dados_json = PythonOperator(
 )
 
 task_insere_dados_csv = PythonOperator(
-    task_id='isere_dados_csv', # insere dados json na tabela dados_juridicos
+    task_id='insere_dados_csv', # insere dados csv na tabela dados_juridicos
     python_callable=insere_dados_csv,
     dag=dag
 )

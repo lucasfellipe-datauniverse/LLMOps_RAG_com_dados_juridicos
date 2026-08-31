@@ -1,11 +1,11 @@
 #%%
-from connection import postgre_connection
+from modulo_dados.connection import postgre_connection
 
 #%%
 def extrai_dados():
     # extrai os dados necessarios para RAG
     conn, cur = postgre_connection()        
-    query = 'select question, answer from dados_juridicos'
+    query = 'select doc_id, question, answer from dados_juridicos'
     alldata = []
 
     cur.execute(query)

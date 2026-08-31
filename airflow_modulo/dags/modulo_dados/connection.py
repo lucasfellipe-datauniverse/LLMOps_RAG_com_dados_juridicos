@@ -8,7 +8,7 @@ def postgre_connection():
     conn = psycopg2.connect(dbname='airflow',
                             user='airflow',
                             password='airflow',
-                            host='postgre',
+                            host='postgres',
                             port=5432)
 
     cur = conn.cursor(cursor_factory=RealDictCursor)
